@@ -59,12 +59,6 @@ export default function Login() {
 		<>
 			<div>
 				<h2 className="mt-6 text-3xl font-extrabold text-gray-900">Sign in</h2>
-				<p className="mt-2 text-sm text-gray-600">
-					Do not have an account yet?{' '}
-					<Anchor component={Link} to="/register" size="sm" prefetch="intent">
-						Create account
-					</Anchor>
-				</p>
 			</div>
 
 			<fetcher.Form method="post" replace className="mt-8">
