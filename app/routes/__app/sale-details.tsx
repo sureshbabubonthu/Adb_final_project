@@ -14,6 +14,7 @@ import * as React from 'react'
 import {TailwindContainer} from '~/components/TailwindContainer'
 import {useCart} from '~/context/CartContext'
 import {cancelOrder, getOrders} from '~/lib/order.server'
+import {db} from '~/lib/prisma.server'
 import {requireUserId} from '~/lib/session.server'
 import {titleCase} from '~/utils/misc'
 import {badRequest} from '~/utils/misc.server'
@@ -46,6 +47,84 @@ export const action = async ({request}: ActionArgs) => {
 			return cancelOrder(orderId)
 				.then(() => json({success: true}))
 				.catch(e => json({success: false, message: e.message}, {status: 500}))
+		}
+
+		case 'cancel-single-product': {
+			const orderId = formData.get('orderId')?.toString()
+			const productId = formData.get('productId')?.toString()
+			const productQuantity = formData.get('productQuantity')?.toString()
+			const productPrice = formData.get('productPrice')?.toString()
+
+			console.log({
+				orderId,
+				productId,
+				productQuantity,
+				productPrice,
+			})
+
+			if (!orderId) {
+				return badRequest({success: false, message: 'Invalid order id'})
+			}
+
+			if (!productId) {
+				return badRequest({success: false, message: 'Invalid product id'})
+			}
+
+			if (!productQuantity) {
+				return badRequest({
+					success: false,
+					message: 'Invalid product quantity',
+				})
+			}
+
+			if (!productPrice) {
+				return badRequest({
+					success: false,
+					message: 'Invalid product price',
+				})
+			}
+
+			await db.productOrder.update({
+				where: {
+					productId_orderId: {
+						productId,
+						orderId,
+					},
+				},
+				data: {
+					quantity: {
+						set: 0,
+					},
+					amount: {
+						set: 0,
+					},
+					status: OrderStatus.RETURN,
+				},
+			})
+
+			await db.product.update({
+				where: {
+					id: productId,
+				},
+				data: {
+					quantity: {
+						increment: Number(productQuantity),
+					},
+				},
+			})
+
+			await db.payment.update({
+				where: {
+					orderId,
+				},
+				data: {
+					amount: {
+						decrement: Number(productPrice) * Number(productQuantity),
+					},
+				},
+			})
+
+			return json({success: true})
 		}
 
 		default:
@@ -122,7 +201,9 @@ export default function OrderHistory() {
 function Order({order}: {order: LoaderData['orders'][number]}) {
 	const returnOrderFetcher = useFetcher()
 
-	const isOrderReturned = order.status === OrderStatus.RETURN
+	const areAllProdcutsNonReturnable = order.products.every(
+		product => !product.product.isReturnable
+	)
 
 	return (
 		<div key={order.id}>
@@ -172,16 +253,6 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 							<span className="font-semibold">${order.payment?.amount}</span>
 						</dd>
 					</div>
-
-					{/* Status */}
-					<div className="flex justify-between pt-6  text-gray-900 sm:block sm:pt-0">
-						<dt className="font-semibold">Status</dt>
-						<dd className="flex items-center gap-2 sm:mt-1">
-							<Badge color={isOrderReturned ? 'blue' : 'green'}>
-								{titleCase(order.status)}
-							</Badge>
-						</dd>
-					</div>
 				</dl>
 
 				{order.status === OrderStatus.DONE ? (
@@ -190,6 +261,7 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 						variant="outline"
 						loaderPosition="right"
 						loading={returnOrderFetcher.state !== 'idle'}
+						disabled={areAllProdcutsNonReturnable}
 						onClick={() =>
 							returnOrderFetcher.submit(
 								{
@@ -203,7 +275,7 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 							)
 						}
 					>
-						Cancel Order
+						{areAllProdcutsNonReturnable ? 'Non-returnable' : 'Return Order'}
 					</Button>
 				) : null}
 			</div>
@@ -243,55 +315,82 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 					</tr>
 				</thead>
 				<tbody className="divide-y divide-gray-200 border-b border-gray-200 text-sm sm:border-t">
-					{order.products.map(product => (
-						<tr key={product.id}>
-							<td className="py-6 pr-8">
-								<div className="flex items-center">
-									<img
-										src={product.product.image}
-										alt={product.product.name}
-										className="mr-6 h-16 w-16 rounded object-cover object-center"
-									/>
-									<div className="flex flex-col font-medium text-gray-900">
-										<Anchor
-											component={Link}
-											to={`/product/${product.product.slug}`}
-											size="sm"
-										>
-											{product.product.name}
-										</Anchor>
+					{order.products.map(product => {
+						return (
+							<tr key={product.id}>
+								<td className="py-6 pr-8">
+									<div className="flex items-center">
+										<img
+											src={product.product.image}
+											alt={product.product.name}
+											className="mr-6 h-16 w-16 rounded object-cover object-center"
+										/>
+										<div className="flex flex-col font-medium text-gray-900">
+											<Anchor
+												component={Link}
+												to={`/product/${product.product.slug}`}
+												size="sm"
+											>
+												{product.product.name}
+											</Anchor>
+										</div>
 									</div>
-								</div>
-							</td>
+								</td>
 
-							<td className="hidden py-6 pr-8 sm:table-cell">
-								{product.product.barcodeId}
-							</td>
+								<td className="hidden py-6 pr-8 sm:table-cell">
+									{product.product.barcodeId}
+								</td>
 
-							<td className="hidden py-6 pr-8 sm:table-cell">
-								{product.quantity}
-							</td>
+								<td className="hidden py-6 pr-8 sm:table-cell">
+									{product.quantity}
+								</td>
 
-							<td className="hidden py-6 pr-8 sm:table-cell">
-								${product.amount}
-							</td>
+								<td className="hidden py-6 pr-8 sm:table-cell">
+									${product.amount}
+								</td>
 
-							<td className="hidden py-6 pr-8 sm:table-cell">
-								<Badge color="blue">{product.status}</Badge>
-							</td>
+								<td className="hidden py-6 pr-8 sm:table-cell">
+									<Badge color="blue">{product.status}</Badge>
+								</td>
 
-							<td className="whitespace-nowrap py-6 text-right font-medium">
-								<Anchor
-									component={Link}
-									to={`/product/${product.product.slug}`}
-									size="sm"
-								>
-									View
-									<span className="sr-only">, {product.product.name}</span>
-								</Anchor>
-							</td>
-						</tr>
-					))}
+								<td className="flex items-center justify-between gap-4 whitespace-nowrap py-6 text-right font-medium">
+									{/* <Button
+										variant="subtle"
+										size="sm"
+										color="red"
+										compact
+										disabled={!product.product.isReturnable}
+										onClick={() =>
+											returnOrderFetcher.submit(
+												{
+													intent: 'cancel-single-product',
+													orderId: order.id,
+													productId: product.id,
+													productQuantity: product.quantity.toString(),
+													productPrice: product.amount.toString(),
+												},
+												{
+													method: 'post',
+													replace: true,
+												}
+											)
+										}
+									>
+										{product.product.isReturnable ? 'Delete' : 'Not Returnable'}
+									</Button> */}
+
+									<Anchor
+										component={Link}
+										to={`/product/${product.product.slug}`}
+										size="sm"
+									>
+										View
+										<span className="sr-only">, {product.product.name}</span>
+									</Anchor>
+								</td>
+							</tr>
+						)
+					})}
 				</tbody>
 			</table>
 		</div>
