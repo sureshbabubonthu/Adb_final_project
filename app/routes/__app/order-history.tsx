@@ -1,6 +1,6 @@
 import {ArrowLeftIcon, ShoppingBagIcon} from '@heroicons/react/24/outline'
 import {Anchor, Badge, Button} from '@mantine/core'
-import {OrderStatus, OrderType} from '@prisma/client'
+import {OrderStatus} from '@prisma/client'
 import type {ActionArgs, LoaderArgs, SerializeFrom} from '@remix-run/node'
 import {json} from '@remix-run/node'
 import {
@@ -13,9 +13,9 @@ import clsx from 'clsx'
 import * as React from 'react'
 import {TailwindContainer} from '~/components/TailwindContainer'
 import {useCart} from '~/context/CartContext'
-import {getOrders, cancelOrder} from '~/lib/order.server'
+import {cancelOrder, getOrders} from '~/lib/order.server'
 import {requireUserId} from '~/lib/session.server'
-import {formatTime, titleCase} from '~/utils/misc'
+import {titleCase} from '~/utils/misc'
 import {badRequest} from '~/utils/misc.server'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US')
@@ -123,7 +123,6 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 	const returnOrderFetcher = useFetcher()
 
 	const isOrderCancelled = order.status === OrderStatus.CANCELLED
-	const isDelivery = order.type === OrderType.DELIVERY
 
 	return (
 		<div key={order.id}>
@@ -148,10 +147,14 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 						</dd>
 					</div>
 
-					{/* Order type */}
 					<div className="flex justify-between pt-6 text-gray-900 sm:block sm:pt-0">
-						<dt className="font-semibold">Order type</dt>
-						<dd className="sm:mt-1">{titleCase(order.type)}</dd>
+						<dt className="font-semibold">Customer Name</dt>
+						<dd className="sm:mt-1">{order.customerName}</dd>
+					</div>
+
+					<div className="flex justify-between pt-6 text-gray-900 sm:block sm:pt-0">
+						<dt className="font-semibold">Customer Phone</dt>
+						<dd className="sm:mt-1">{order.customerPhone}</dd>
 					</div>
 
 					{/* Payment method */}
@@ -206,27 +209,6 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 					</Button>
 				) : null}
 			</div>
-
-			{/* Delivery address  */}
-			{isDelivery ? (
-				<div>
-					<div className="mt-2 flex items-center gap-4 pt-6 text-sm text-gray-900 sm:block sm:pt-0">
-						<span className="pl-6 font-semibold">Delivery address: </span>
-						<span className="font-normal">{order.payment?.address}</span>
-					</div>
-					{order.status === OrderStatus.PREPARING ? (
-						<div className="mt-2 flex items-center gap-4 pt-6 text-sm text-gray-900 sm:block sm:pt-0">
-							<span className="pl-6 font-semibold">Estd time: </span>
-							<span className="font-normal">45min</span>
-						</div>
-					) : null}
-				</div>
-			) : order.status === OrderStatus.READY ? (
-				<div className="mt-2 flex items-center gap-4 pt-6 text-sm text-gray-900 sm:block sm:pt-0">
-					<span className="pl-6 font-semibold">Pickup Time: </span>
-					<span className="font-normal">{formatTime(order.pickupTime!)}</span>
-				</div>
-			) : null}
 
 			<table className="mt-4 w-full text-gray-500 sm:mt-6">
 				<thead className="sr-only text-left text-sm text-gray-500 sm:not-sr-only">

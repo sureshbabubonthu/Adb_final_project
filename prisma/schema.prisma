@@ -37,13 +37,14 @@ model Product {
 }
 
 model Order {
-  id         String         @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt  DateTime       @default(now())
-  status     OrderStatus
-  products   ProductOrder[]
-  type       OrderType      @default(PICKUP)
-  payment    Payment?
-  pickupTime DateTime?
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt     DateTime       @default(now())
+  customerName  String
+  customerPhone String
+  status        OrderStatus
+  products      ProductOrder[]
+  payment       Payment?
+  pickupTime    DateTime?
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String @db.ObjectId
@@ -56,6 +57,7 @@ model Payment {
   createdAt     DateTime      @default(now())
   amount        Float
   paymentMethod PaymentMethod
+  cardNumber    Int?
   address       String?
 
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -77,14 +79,10 @@ model ProductOrder {
   @@map("product_order")
 }
 
-enum OrderType {
-  DELIVERY
-  PICKUP
-}
-
 enum PaymentMethod {
   CREDIT_CARD
   DEBIT_CARD
+  CASH
 }
 
 enum OrderStatus {

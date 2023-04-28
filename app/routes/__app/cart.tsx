@@ -11,11 +11,11 @@ import {
 	Input,
 	Modal,
 	Select,
-	Textarea,
+	TextInput,
 } from '@mantine/core'
-import {DatePicker, TimeInput} from '@mantine/dates'
+import {DatePicker} from '@mantine/dates'
 import {cleanNotifications, showNotification} from '@mantine/notifications'
-import {OrderType, PaymentMethod} from '@prisma/client'
+import {PaymentMethod} from '@prisma/client'
 import type {ActionArgs} from '@remix-run/node'
 import {json, redirect} from '@remix-run/node'
 import {Link, useFetcher, useLocation} from '@remix-run/react'
@@ -49,29 +49,20 @@ export async function action({request}: ActionArgs) {
 		case 'place-order': {
 			const stringifiedProducts = formData.get('products[]')?.toString()
 			const amount = formData.get('amount')?.toString()
-			const orderType = formData.get('orderType')?.toString()
 			const paymentMethod = formData.get('paymentMethod')?.toString()
-			const address = formData.get('address')?.toString()
-			const pickupTime = formData.get('pickupTime')?.toString()
+			const customerName = formData.get('customerName')?.toString()
+			const customerPhone = formData.get('customerPhone')?.toString()
 
-			if (!stringifiedProducts || !amount || !paymentMethod || !orderType) {
+			if (
+				!stringifiedProducts ||
+				!amount ||
+				!paymentMethod ||
+				!customerName ||
+				!customerPhone
+			) {
 				return badRequest<ActionData>({
 					success: false,
 					message: 'Invalid request body',
-				})
-			}
-
-			if (orderType === OrderType.DELIVERY && !address) {
-				return badRequest<ActionData>({
-					success: false,
-					message: 'Address is required for delivery',
-				})
-			}
-
-			if (orderType === OrderType.PICKUP && !pickupTime) {
-				return badRequest<ActionData>({
-					success: false,
-					message: 'Pickup time is required for pickup',
 				})
 			}
 
@@ -80,11 +71,10 @@ export async function action({request}: ActionArgs) {
 			await createOrder({
 				userId,
 				products,
+				customerName,
+				customerPhone,
 				amount: Number(amount),
 				paymentMethod: paymentMethod as PaymentMethod,
-				orderType: orderType as OrderType,
-				address: address || '',
-				pickupTime: pickupTime ? new Date(pickupTime) : null,
 			})
 
 			return redirect('/order-history/?success=true')
@@ -100,20 +90,13 @@ export default function Cart() {
 	const {clearCart, itemsInCart, totalPrice} = useCart()
 	const {user} = useOptionalUser()
 
-	const [orderType, setOrderType] = React.useState<OrderType>(OrderType.PICKUP)
 	const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>(
 		PaymentMethod.CREDIT_CARD
 	)
-	const [address, setAddress] = React.useState(user?.address ?? '')
 	const [isPaymentModalOpen, setIsPaymentModalOpen] = React.useState(false)
-	const [cardNumber, setCardNumber] = React.useState<string>('1234567891234567')
-	const [pickUpTime, setPickUpTime] = React.useState<Date | null>(
-		new Date(new Date().getTime() + 2 * 60 * 60 * 1000)
-	)
-	const [cardExpiry, setCardExpiry] = React.useState<Date | null>(
-		new Date('2026-12-31')
-	)
-	const [cardCvv, setCardCvv] = React.useState<string>('123')
+	const [cardNumber, setCardNumber] = React.useState<string>('')
+	const [cardExpiry, setCardExpiry] = React.useState<Date | null>(null)
+	const [cardCvv, setCardCvv] = React.useState<string>('')
 	const [errors, setErrors] = React.useState<{
 		cardNumber?: string
 		cardExpiry?: string
@@ -127,56 +110,8 @@ export default function Cart() {
 	const closePaymentModal = () => setIsPaymentModalOpen(false)
 	const showPaymentModal = () => setIsPaymentModalOpen(true)
 
-	const placeOrder = () => {
-		const formData = new FormData()
-
-		setErrors({
-			cardNumber: '',
-			cardExpiry: '',
-			cardCvv: '',
-		})
-
-		if (cardNumber.replace(/[_ ]/g, '').length !== 16) {
-			setErrors(prevError => ({
-				...prevError,
-				cardNumber: 'Card number must be 16 digits',
-			}))
-		}
-
-		if (!cardExpiry) {
-			setErrors(prevError => ({
-				...prevError,
-				cardExpiry: 'Card expiry is required',
-			}))
-		}
-
-		if (!cardCvv || cardCvv.length !== 3) {
-			setErrors(prevError => ({
-				...prevError,
-				cardCvv: 'Card CVV must be 3 digits',
-			}))
-		}
-
-		if (Object.values(errors).some(error => error !== '')) {
-			return
-		}
-
-		formData.append('products[]', JSON.stringify(itemsInCart))
-		formData.append('amount', totalPrice.toString())
-		formData.append('intent', 'place-order')
-		formData.append('orderType', orderType)
-		formData.append('paymentMethod', paymentMethod)
-		formData.append('address', address)
-		formData.append('pickupTime', pickUpTime ? pickUpTime.toISOString() : '')
-
-		fetcher.submit(formData, {
-			method: 'post',
-			replace: true,
-		})
-	}
-
 	const isSubmitting = fetcher.state !== 'idle'
-	const isDelivery = orderType === OrderType.DELIVERY
+	const isCashPayment = paymentMethod === PaymentMethod.CASH
 
 	React.useEffect(() => {
 		if (fetcher.type !== 'done') {
@@ -277,7 +212,56 @@ export default function Cart() {
 				overlayBlur={1}
 				overlayOpacity={0.7}
 			>
-				<div className="flex flex-col gap-4">
+				<fetcher.Form
+					method="post"
+					className="flex flex-col gap-4"
+					onSubmit={e => {
+						e.preventDefault()
+
+						const formData = new FormData(e.currentTarget)
+
+						setErrors({
+							cardNumber: '',
+							cardExpiry: '',
+							cardCvv: '',
+						})
+
+						if (cardNumber.replace(/[_ ]/g, '').length !== 16) {
+							setErrors(prevError => ({
+								...prevError,
+								cardNumber: 'Card number must be 16 digits',
+							}))
+						}
+
+						if (!cardExpiry) {
+							setErrors(prevError => ({
+								...prevError,
+								cardExpiry: 'Card expiry is required',
+							}))
+						}
+
+						if (!cardCvv || cardCvv.length !== 3) {
+							setErrors(prevError => ({
+								...prevError,
+								cardCvv: 'Card CVV must be 3 digits',
+							}))
+						}
+
+						if (Object.values(errors).some(error => error !== '')) {
+							return
+						}
+
+						formData.append('products[]', JSON.stringify(itemsInCart))
+						formData.append('amount', totalPrice.toString())
+						formData.append('intent', 'place-order')
+						formData.append('paymentMethod', paymentMethod)
+
+						fetcher.submit(formData, {
+							method: 'post',
+							replace: true,
+						})
+					}}
+				>
 					<div className="flex flex-col gap-2">
 						<h2 className="text-sm text-gray-600">
 							<span className="font-semibold">Amount: </span>
@@ -285,16 +269,8 @@ export default function Cart() {
 						</h2>
 					</div>
 
-					<Select
-						label="Order type"
-						value={orderType}
-						clearable={false}
-						onChange={e => setOrderType(e as OrderType)}
-						data={Object.values(OrderType).map(type => ({
-							label: titleCase(type.replace(/_/g, ' ')),
-							value: type,
-						}))}
-					/>
+					<TextInput name="customerName" label="Customer name" required />
+					<TextInput name="customerPhone" label="Customer phone" required />
 
 					<Select
 						label="Payment method"
@@ -306,79 +282,61 @@ export default function Cart() {
 							value: method,
 						}))}
 					/>
-
-					<Input.Wrapper
-						id={id}
-						label="Credit card number"
-						required
-						error={errors.cardNumber}
-					>
-						<Input
-							id={id}
-							component={ReactInputMask}
-							mask="9999 9999 9999 9999"
-							placeholder="XXXX XXXX XXXX XXXX"
-							alwaysShowMask={false}
-							value={cardNumber}
-							onChange={e => setCardNumber(e.target.value)}
-						/>
-					</Input.Wrapper>
-
-					<div className="flex items-center gap-4">
-						<Input.Wrapper
-							id={id + 'cvv'}
-							label="CVV"
-							required
-							error={errors.cardCvv}
-						>
-							<Input
-								id={id + 'cvv'}
-								name="cvv"
-								component={ReactInputMask}
-								mask="999"
-								placeholder="XXX"
-								alwaysShowMask={false}
-								value={cardCvv}
-								onChange={e => setCardCvv(e.target.value)}
-							/>
-						</Input.Wrapper>
-
-						<DatePicker
-							name="expiryDate"
-							label="Expiry"
-							inputFormat="MM/YYYY"
-							clearable={false}
-							placeholder="MM/YYYY"
-							labelFormat="MM/YYYY"
-							required
-							value={cardExpiry}
-							minDate={new Date()}
-							onChange={e => setCardExpiry(e)}
-							error={errors.cardExpiry}
-							initialLevel="year"
-							hideOutsideDates
-						/>
-					</div>
-
-					{isDelivery ? (
-						<Textarea
-							label="Delivery address"
-							name="address"
-							value={address}
-							onChange={e => setAddress(e.target.value)}
-							required
-						/>
-					) : (
-						<div>
-							<TimeInput
-								label="Pickup time"
-								clearable={false}
-								format="12"
-								value={pickUpTime}
-								onChange={setPickUpTime}
+					{!isCashPayment && (
+						<>
+							<Input.Wrapper
+								id={id}
+								label="Credit card number"
 								required
-							/>
-						</div>
+								error={errors.cardNumber}
+							>
+								<Input
+									id={id}
+									component={ReactInputMask}
+									mask="9999 9999 9999 9999"
+									placeholder="XXXX XXXX XXXX XXXX"
+									alwaysShowMask={false}
+									value={cardNumber}
+									onChange={e => setCardNumber(e.target.value)}
+								/>
+							</Input.Wrapper>
+
+							<div className="flex items-center gap-4">
+								<Input.Wrapper
+									id={id + 'cvv'}
+									label="CVV"
+									required
+									error={errors.cardCvv}
+								>
+									<Input
+										id={id + 'cvv'}
+										name="cvv"
+										component={ReactInputMask}
+										mask="999"
+										placeholder="XXX"
+										alwaysShowMask={false}
+										value={cardCvv}
+										onChange={e => setCardCvv(e.target.value)}
+									/>
+								</Input.Wrapper>
+
+								<DatePicker
+									name="expiryDate"
+									label="Expiry"
+									inputFormat="MM/YYYY"
+									clearable={false}
+									placeholder="MM/YYYY"
+									labelFormat="MM/YYYY"
+									required
+									value={cardExpiry}
+									minDate={new Date()}
+									onChange={e => setCardExpiry(e)}
+									error={errors.cardExpiry}
+									initialLevel="year"
+									hideOutsideDates
+								/>
+							</div>
+						</>
 					)}
 
 					<div className="mt-6 flex items-center gap-4 sm:justify-end">
@@ -392,14 +350,14 @@ export default function Cart() {
 
 						<Button
 							variant="filled"
-							onClick={() => placeOrder()}
+							type="submit"
 							loading={isSubmitting}
 							loaderPosition="right"
 						>
 							Place order
 						</Button>
 					</div>
-				</div>
+				</fetcher.Form>
 			</Modal>
 		</>
 	)

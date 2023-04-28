@@ -1,10 +1,4 @@
-import type {
-	Order,
-	OrderType,
-	Payment,
-	PaymentMethod,
-	User,
-} from '@prisma/client'
+import type {Order, Payment, PaymentMethod, User} from '@prisma/client'
 import {OrderStatus} from '@prisma/client'
 import type {CartItem} from '~/context/CartContext'
 import {db} from './prisma.server'
@@ -47,32 +41,28 @@ export function createOrder({
 	userId,
 	products,
 	amount,
-	orderType,
+	customerName,
+	customerPhone,
 	paymentMethod,
-	address,
-	pickupTime,
 }: {
 	userId: User['id']
 	products: Array<CartItem>
 	amount: Payment['amount']
+	customerName: Order['customerName']
+	customerPhone: Order['customerPhone']
 	paymentMethod: PaymentMethod
-	orderType: OrderType
-	address: Required<Payment['address']>
-	pickupTime: Order['pickupTime']
 }) {
 	return db.$transaction(async tx => {
 		const order = await tx.order.create({
 			data: {
 				userId,
-				type: orderType,
-				status: OrderStatus.PREPARING,
-				pickupTime,
+				status: OrderStatus.READY,
+				customerName,
+				customerPhone,
 				payment: {
 					create: {
 						paymentMethod,
-						address,
 						amount,
-
 						user: {
 							connect: {
 								id: userId,
