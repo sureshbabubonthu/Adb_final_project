@@ -33,6 +33,7 @@ async function seed() {
 		await db.product.create({
 			data: {
 				name: product.name,
+				barcodeId: product.barcodeId,
 				description: product.description,
 				price: product.price,
 				image: product.image,
