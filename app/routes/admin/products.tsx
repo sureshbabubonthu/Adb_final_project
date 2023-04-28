@@ -4,6 +4,7 @@ import {
 	Modal,
 	MultiSelect,
 	NumberInput,
+	Select,
 	TextInput,
 	Textarea,
 	clsx,
@@ -50,6 +51,7 @@ const ManageProductSchema = z.object({
 		.min(1, 'Category is required')
 		.transform(value => value.split(',')),
 	barcodeId: z.string().min(1, 'Barcode ID is required'),
+	isReturnable: z.string().min(1, 'Returnable is required'),
 })
 
 export const loader = async ({request}: LoaderArgs) => {
@@ -86,10 +88,12 @@ export const action: ActionFunction = async ({request}) => {
 		},
 		update: {
 			...rest,
+			isReturnable: rest.isReturnable === 'true',
 			slug: slugify(rest.name, {lower: true}),
 		},
 		create: {
 			...rest,
+			isReturnable: rest.isReturnable === 'true',
 			slug: slugify(rest.name, {lower: true}),
 		},
 	})
@@ -352,6 +356,18 @@ export default function ManageProduct() {
 							defaultValue={selectedProduct?.price}
 							error={fetcher.data?.fieldErrors?.price}
 							precision={2}
+							required
+						/>
+
+						<Select
+							name="isReturnable"
+							label="Is returnable"
+							defaultValue={selectedProduct?.isReturnable.toString()}
+							error={fetcher.data?.fieldErrors?.isReturnable}
+							data={[
+								{label: 'Yes', value: 'true'},
+								{label: 'No', value: 'false'},
+							]}
 							required
 						/>
 
