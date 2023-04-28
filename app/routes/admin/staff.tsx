@@ -9,7 +9,7 @@ import * as React from 'react'
 import {z} from 'zod'
 import {TailwindContainer} from '~/components/TailwindContainer'
 import {db} from '~/lib/prisma.server'
-import {badRequest} from '~/utils/misc.server'
+import {badRequest, createPasswordHash} from '~/utils/misc.server'
 import type {inferErrors} from '~/utils/validation'
 import {validateAction} from '~/utils/validation'
 
@@ -43,7 +43,7 @@ export const action: ActionFunction = async ({request}) => {
 		data: {
 			name: fields.name,
 			email: fields.email,
-			password: fields.password,
+			password: await createPasswordHash(fields.password),
 			role: Role.STAFF,
 		},
 	})
