@@ -13,7 +13,6 @@ model User {
   name     String
   password String
   email    String    @unique
-  address  String?
   role     Role      @default(CUSTOMER)
   orders   Order[]
   payments Payment[]
@@ -22,16 +21,17 @@ model User {
 }
 
 model Product {
-  id          String         @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  barcodeId   String         @unique
-  slug        String         @unique
-  description String
-  image       String
-  quantity    Int
-  price       Float
-  category    String[]
-  orders      ProductOrder[]
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  barcodeId    String         @unique
+  slug         String         @unique
+  description  String
+  image        String
+  isReturnable Boolean        @default(true)
+  quantity     Int
+  price        Float
+  category     String[]
+  orders       ProductOrder[]
 
   @@map("product")
 }

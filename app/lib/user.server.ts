@@ -11,7 +11,6 @@ export async function getUserById(id: User['id']) {
 			id: true,
 			name: true,
 			email: true,
-			address: true,
 		},
 	})
 }
@@ -31,13 +30,11 @@ export async function createUser({
 	password,
 	name,
 	role = Role.CUSTOMER,
-	address,
 }: {
 	email: User['email']
 	password: string
 	name: User['name']
 	role?: User['role']
-	address?: User['address']
 }) {
 	return db.user.create({
 		data: {
@@ -45,7 +42,6 @@ export async function createUser({
 			email,
 			password: await createPasswordHash(password),
 			role,
-			address,
 		},
 	})
 }
