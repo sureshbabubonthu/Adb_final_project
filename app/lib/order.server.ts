@@ -1,13 +1,11 @@
 import type {
 	Order,
+	OrderType,
 	Payment,
 	PaymentMethod,
 	User,
-	OrderType,
 } from '@prisma/client'
 import {OrderStatus} from '@prisma/client'
-import appConfig from 'app.config'
-import {Queue} from 'quirrel/remix'
 import type {CartItem} from '~/context/CartContext'
 import {db} from './prisma.server'
 
@@ -113,16 +111,6 @@ export function createOrder({
 			})
 		)
 
-		await updateOrderStatus.enqueue(
-			{
-				orderId: order.id,
-				status: OrderStatus.PREPARING,
-			},
-			{
-				delay: appConfig.statusUpdateInterval,
-			}
-		)
-
 		return order
 	})
 }
@@ -175,25 +163,3 @@ export async function cancelOrder(orderId: Order['id']) {
 		)
 	)
 }
-
-export const updateOrderStatus = Queue(
-	'/api/queues/update-order-status',
-	async ({orderId, status}: {orderId: Order['id']; status: OrderStatus}) => {
-		// if (!appConfig.updateStatusAutomatically) {
-		// 	return
-		// }
-		// await db.$transaction(async tx => {
-		// 	const order = await tx.order.findUnique({
-		// 		where: {
-		// 			id: orderId,
-		// 		},
-		// 	})
-		// 	invariant(order, 'Order not found')
-		// 	if (order.status !== OrderStatus.PENDING) return
-		// 	await db.order.update({
-		// 		where: {id: orderId},
-		// 		data: {status},
-		// 	})
-		// })
-	}
-)
