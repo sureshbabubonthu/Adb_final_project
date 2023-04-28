@@ -218,6 +218,12 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 							scope="col"
 							className="hidden w-1/5 py-3 pr-8 font-normal sm:table-cell"
 						>
+							Barcode ID
+						</th>
+						<th
+							scope="col"
+							className="hidden w-1/5 py-3 pr-8 font-normal sm:table-cell"
+						>
 							Quantity
 						</th>
 						<th
@@ -225,6 +231,13 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 							className="hidden py-3 pr-8 font-normal sm:table-cell"
 						>
 							Price
+						</th>
+
+						<th
+							scope="col"
+							className="hidden py-3 pr-8 font-normal sm:table-cell"
+						>
+							Status
 						</th>
 						<th scope="col" className="w-0 py-3 text-right font-normal"></th>
 					</tr>
@@ -252,11 +265,19 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 							</td>
 
 							<td className="hidden py-6 pr-8 sm:table-cell">
+								{product.product.barcodeId}
+							</td>
+
+							<td className="hidden py-6 pr-8 sm:table-cell">
 								{product.quantity}
 							</td>
 
 							<td className="hidden py-6 pr-8 sm:table-cell">
 								${product.amount}
+							</td>
+
+							<td className="hidden py-6 pr-8 sm:table-cell">
+								<Badge color="blue">{product.status}</Badge>
 							</td>
 
 							<td className="whitespace-nowrap py-6 text-right font-medium">

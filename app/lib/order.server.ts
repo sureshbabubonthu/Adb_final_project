@@ -111,6 +111,8 @@ export async function cancelOrder(orderId: Order['id']) {
 			id: orderId,
 		},
 		include: {
+			payment: true,
+
 			products: {
 				include: {
 					product: true,
@@ -133,14 +135,41 @@ export async function cancelOrder(orderId: Order['id']) {
 	})
 
 	const products = order.products.map(p => ({
-		id: p.product.id,
+		isReturnable: p.product.isReturnable,
+		price: p.amount,
 		quantity: p.quantity,
-		baseQuantity: p.product.quantity,
+		id: p.productId,
 	}))
+	const totalAmount = order.payment?.amount ?? 0
 
+	let newAmountAfterReturns = totalAmount
 	await Promise.all(
-		products.map(p =>
-			db.product.update({
+		products.map(async p => {
+			if (!p.isReturnable) {
+				return Promise.resolve()
+			}
+
+			newAmountAfterReturns -= p.price
+
+			await db.productOrder.update({
+				where: {
+					productId_orderId: {
+						productId: p.id,
+						orderId: orderId,
+					},
+				},
+				data: {
+					quantity: {
+						set: 0,
+					},
+					amount: {
+						set: 0,
+					},
+					status: OrderStatus.RETURN,
+				},
+			})
+
+			return db.product.update({
 				where: {
 					id: p.id,
 				},
@@ -150,6 +179,15 @@ export async function cancelOrder(orderId: Order['id']) {
 					},
 				},
 			})
-		)
+		})
 	)
+
+	await db.payment.update({
+		where: {
+			orderId,
+		},
+		data: {
+			amount: newAmountAfterReturns,
+		},
+	})
 }

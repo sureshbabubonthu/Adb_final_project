@@ -262,7 +262,7 @@ export default function Cart() {
 					<div className="flex flex-col gap-2">
 						<h2 className="text-sm text-gray-600">
 							<span className="font-semibold">Amount: </span>
-							<span>${totalPrice}</span>
+							<span>${totalPrice.toFixed(2)}</span>
 						</h2>
 					</div>
 

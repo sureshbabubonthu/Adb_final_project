@@ -255,6 +255,12 @@ export default function ManageProduct() {
 											</th>
 											<th
 												scope="col"
+												className="hidden py-3.5 px-3 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+											>
+												Is Returnable
+											</th>
+											<th
+												scope="col"
 												className="relative py-3.5 pl-3 pr-4 sm:pr-6 md:pr-0"
 											>
 												<span className="sr-only">Actions</span>
@@ -278,6 +284,10 @@ export default function ManageProduct() {
 												</td>
 												<td className="whitespace-nowrap py-4 px-3 text-sm text-gray-500">
 													{formatList(product.category)}
+												</td>
+
+												<td className="whitespace-nowrap py-4 px-3 text-sm text-gray-500">
+													{product.isReturnable ? 'Yes' : 'No'}
 												</td>
 
 												<td className="relative space-x-4 whitespace-nowrap py-4 pl-3 pr-4 text-left text-sm font-medium sm:pr-6 md:pr-0">
