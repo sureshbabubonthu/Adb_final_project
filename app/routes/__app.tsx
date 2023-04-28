@@ -15,7 +15,7 @@ import {
 } from '@mantine/core'
 import type {LoaderArgs, SerializeFrom} from '@remix-run/node'
 import {json, redirect} from '@remix-run/node'
-import {Form, Link, Outlet, useLoaderData} from '@remix-run/react'
+import {Form, Link, Outlet, useLoaderData, useLocation} from '@remix-run/react'
 import appConfig from 'app.config'
 import {Footer} from '~/components/Footer'
 import {TailwindContainer} from '~/components/TailwindContainer'
@@ -60,6 +60,7 @@ export default function AppLayout() {
 }
 
 function HeaderComponent() {
+	const location = useLocation()
 	const {user} = useOptionalUser()
 	const {itemsInCart} = useCart()
 	const {isCustomer} = useLoaderData<typeof loader>()
