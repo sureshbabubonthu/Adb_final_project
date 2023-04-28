@@ -359,7 +359,7 @@ export default function ManageProduct() {
 							name="quantity"
 							label="Quantity"
 							defaultValue={selectedProduct?.quantity}
-							min={1}
+							min={0}
 							error={fetcher.data?.fieldErrors?.quantity}
 							required
 						/>
