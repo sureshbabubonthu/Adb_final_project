@@ -77,7 +77,7 @@ export async function action({request}: ActionArgs) {
 				paymentMethod: paymentMethod as PaymentMethod,
 			})
 
-			return redirect('/order-history/?success=true')
+			return redirect('/sale-details/?success=true')
 		}
 	}
 }

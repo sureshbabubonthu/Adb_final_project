@@ -193,9 +193,9 @@ function HeaderComponent() {
 												<Menu.Item
 													icon={<ShoppingBagIcon className="h-4 w-4" />}
 													component={Link}
-													to="/order-history"
+													to="/sale-history"
 												>
-													Your orders
+													Sale history
 												</Menu.Item>
 											) : null}
 											<Menu.Item

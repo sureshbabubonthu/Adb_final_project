@@ -1,13 +1,6 @@
-import {
-	Anchor,
-	Button,
-	Group,
-	PasswordInput,
-	Switch,
-	TextInput,
-} from '@mantine/core'
+import {Button, Group, PasswordInput, Switch, TextInput} from '@mantine/core'
 import type {ActionFunction} from '@remix-run/node'
-import {Link, useFetcher, useSearchParams} from '@remix-run/react'
+import {useFetcher, useSearchParams} from '@remix-run/react'
 import {createUserSession} from '~/lib/session.server'
 import {verifyLogin} from '~/lib/user.server'
 import {LoginSchema} from '~/lib/zod.schema'
