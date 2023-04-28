@@ -288,32 +288,6 @@ export default function ManageProduct() {
 				closeOnClickOutside={isSubmitting ? false : true}
 				closeOnEscape={isSubmitting ? false : true}
 			>
-				{mode === MODE.add ? (
-					<imageUploadFetcher.Form
-						method="post"
-						replace
-						encType="multipart/form-data"
-						action="/api/image-upload"
-					>
-						<div className="mb-4 flex items-center gap-2">
-							<input
-								name="img"
-								type="file"
-								accept="image/*"
-								className="text-grey-500 border text-sm file:mr-5 file:rounded-full file:border-0 file:bg-blue-50 file:py-2	file:px-6 file:text-sm file:font-medium file:text-blue-700 hover:file:cursor-pointer hover:file:bg-amber-50 hover:file:text-amber-700"
-							/>
-							<Button
-								type="submit"
-								compact
-								variant="light"
-								loading={imageUploadFetcher.state !== 'idle'}
-							>
-								Upload image
-							</Button>
-						</div>
-					</imageUploadFetcher.Form>
-				) : null}
-
 				<fetcher.Form method="post" replace>
 					<fieldset disabled={isSubmitting} className="flex flex-col gap-4">
 						<input type="hidden" name="productId" value={selectedProduct?.id} />

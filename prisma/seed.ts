@@ -60,6 +60,7 @@ seed()
 const products = [
 	{
 		name: 'Brinjals (300gm)',
+		barcodeId: '1234',
 		description:
 			'Brinjal is a tropical and subtropical plant that prefers a warm and humid climate. It is a tender perennial, grown as an annual vegetable crop in temperate climates. The plant is erect, with a single stem that grows to a height of 1-3 m (3-10 ft).',
 		image:
@@ -70,6 +71,7 @@ const products = [
 	},
 	{
 		name: 'Cabbage (500gm)',
+		barcodeId: '44566',
 		description:
 			'Cabbage is a leafy green, red, or white biennial plant, grown as an annual vegetable crop for its dense-leaved heads. It is descended from the wild cabbage, B. oleracea, and belongs to the same species as broccoli and cauliflower.',
 		image:

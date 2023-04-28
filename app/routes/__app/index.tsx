@@ -1,16 +1,27 @@
-import {Anchor, Button, MultiSelect} from '@mantine/core'
-import {Link} from '@remix-run/react'
+import {MagnifyingGlassIcon} from '@heroicons/react/24/solid'
+import {
+	ActionIcon,
+	Anchor,
+	Button,
+	Modal,
+	MultiSelect,
+	TextInput,
+} from '@mantine/core'
+import {useDisclosure} from '@mantine/hooks'
+import {Link, useFetcher} from '@remix-run/react'
 import * as React from 'react'
 import {TailwindContainer} from '~/components/TailwindContainer'
 import {useAppData} from '~/utils/hooks'
 
 export default function Dashboard() {
 	const {products, categories} = useAppData()
-
+	const fetcher = useFetcher()
 	const [filteredProducts, setFilteredProducts] = React.useState(products)
 	const [selectedCategories, setSelectedCategories] = React.useState<string[]>(
 		[]
 	)
+
+	const [isSearchModalOpen, handleOpenSearchModal] = useDisclosure(false)
 
 	React.useEffect(() => {
 		if (!selectedCategories || selectedCategories.length === 0) {
@@ -35,17 +46,27 @@ export default function Dashboard() {
 								Products
 							</h2>
 
-							<MultiSelect
-								clearable
-								value={selectedCategories}
-								onChange={setSelectedCategories}
-								label="Filter by category"
-								placeholder="Select category"
-								data={categories.map(c => ({
-									label: c,
-									value: c,
-								}))}
-							/>
+							<div className="flex items-center gap-4">
+								<ActionIcon
+									variant="filled"
+									color="white"
+									onClick={() => handleOpenSearchModal.open()}
+								>
+									<MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
+								</ActionIcon>
+
+								<MultiSelect
+									clearable
+									value={selectedCategories}
+									onChange={setSelectedCategories}
+									label="Filter by category"
+									placeholder="Select category"
+									data={categories.map(c => ({
+										label: c,
+										value: c,
+									}))}
+								/>
+							</div>
 						</div>
 
 						<div className="mt-6 grid grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
@@ -90,6 +111,28 @@ export default function Dashboard() {
 					</div>
 				</TailwindContainer>
 			</div>
+
+			<Modal
+				opened={isSearchModalOpen}
+				onClose={handleOpenSearchModal.close}
+				title="Search for a product"
+				centered
+				overlayBlur={15}
+				overlayOpacity={0.5}
+			>
+				<fetcher.Form method="post" replace className="flex flex-col gap-4">
+					<TextInput
+						label="Enter barcode Id"
+						name="barcodeId"
+						required
+						autoFocus
+					/>
+
+					<Button type="submit" variant="filled" fullWidth>
+						Search and Add
+					</Button>
+				</fetcher.Form>
+			</Modal>
 		</div>
 	)
 }

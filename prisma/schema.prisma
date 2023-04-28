@@ -44,7 +44,6 @@ model Order {
   status        OrderStatus
   products      ProductOrder[]
   payment       Payment?
-  pickupTime    DateTime?
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String @db.ObjectId
