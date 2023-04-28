@@ -85,12 +85,8 @@ enum PaymentMethod {
 }
 
 enum OrderStatus {
-  PENDING
-  DELIVERED
-  READY
-  PREPARING
-  COMPLETED
-  CANCELLED
+  DONE
+  RETURN
 }
 
 enum Role {

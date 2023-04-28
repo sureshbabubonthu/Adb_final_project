@@ -1,12 +1,12 @@
 import {ArrowLeftIcon, PlusIcon} from '@heroicons/react/24/solid'
 import {
 	Button,
-	clsx,
 	Modal,
 	MultiSelect,
 	NumberInput,
-	Textarea,
 	TextInput,
+	Textarea,
+	clsx,
 } from '@mantine/core'
 import {useDisclosure} from '@mantine/hooks'
 import type {Product} from '@prisma/client'
@@ -16,11 +16,11 @@ import {Link, useFetcher, useLoaderData} from '@remix-run/react'
 import {ObjectId} from 'bson'
 import * as React from 'react'
 import slugify from 'slugify'
+import {z} from 'zod'
 import {TailwindContainer} from '~/components/TailwindContainer'
 import {db} from '~/lib/prisma.server'
 import {getAllProducts} from '~/lib/product.server'
 import {requireUser} from '~/lib/session.server'
-import {ManageProductSchema} from '~/lib/zod.schema'
 import {categories} from '~/utils/constant'
 import {formatList} from '~/utils/misc'
 import {badRequest} from '~/utils/misc.server'
@@ -31,6 +31,26 @@ enum MODE {
 	edit,
 	add,
 }
+
+const ManageProductSchema = z.object({
+	productId: z.string().optional(),
+	name: z.string().min(1, 'Name is required'),
+	description: z.string().min(1, 'Description is required'),
+	quantity: z.preprocess(
+		Number,
+		z.number().min(1, 'Quantity must be at least 1')
+	),
+	price: z.preprocess(
+		Number,
+		z.number().min(0, 'Price must be greater than 0')
+	),
+	image: z.string().min(1, 'Image is required'),
+	category: z
+		.string()
+		.min(1, 'Category is required')
+		.transform(value => value.split(',')),
+	barcodeId: z.string().min(1, 'Barcode ID is required'),
+})
 
 export const loader = async ({request}: LoaderArgs) => {
 	await requireUser(request)
@@ -209,6 +229,12 @@ export default function ManageProduct() {
 												scope="col"
 												className="hidden py-3.5 px-3 text-left text-sm font-semibold text-gray-900 sm:table-cell"
 											>
+												Barcode ID
+											</th>
+											<th
+												scope="col"
+												className="hidden py-3.5 px-3 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+											>
 												Price
 											</th>
 											<th
@@ -236,6 +262,9 @@ export default function ManageProduct() {
 											<tr key={product.id}>
 												<td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 md:pl-0">
 													{product.name}
+												</td>
+												<td className="whitespace-nowrap py-4 px-3 text-sm text-gray-500">
+													{product.barcodeId}
 												</td>
 												<td className="whitespace-nowrap py-4 px-3 text-sm text-gray-500">
 													${product.price.toFixed(2)}
@@ -297,6 +326,14 @@ export default function ManageProduct() {
 							label="Name"
 							defaultValue={selectedProduct?.name}
 							error={fetcher.data?.fieldErrors?.name}
+							required
+						/>
+
+						<Textarea
+							name="barcodeId"
+							label="Barcode ID"
+							defaultValue={selectedProduct?.barcodeId}
+							error={fetcher.data?.fieldErrors?.barcodeId}
 							required
 						/>
 

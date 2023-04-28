@@ -122,7 +122,7 @@ export default function OrderHistory() {
 function Order({order}: {order: LoaderData['orders'][number]}) {
 	const returnOrderFetcher = useFetcher()
 
-	const isOrderCancelled = order.status === OrderStatus.CANCELLED
+	const isOrderReturned = order.status === OrderStatus.RETURN
 
 	return (
 		<div key={order.id}>
@@ -177,16 +177,14 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 					<div className="flex justify-between pt-6  text-gray-900 sm:block sm:pt-0">
 						<dt className="font-semibold">Status</dt>
 						<dd className="flex items-center gap-2 sm:mt-1">
-							<Badge color={isOrderCancelled ? 'blue' : 'green'}>
+							<Badge color={isOrderReturned ? 'blue' : 'green'}>
 								{titleCase(order.status)}
 							</Badge>
 						</dd>
 					</div>
 				</dl>
 
-				{order.status === OrderStatus.DELIVERED ||
-				order.status === OrderStatus.READY ||
-				order.status === OrderStatus.COMPLETED ? (
+				{order.status === OrderStatus.DONE ? (
 					<Button
 						color="red"
 						variant="outline"

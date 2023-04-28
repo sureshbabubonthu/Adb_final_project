@@ -2,35 +2,21 @@ import {ShoppingBagIcon, ShoppingCartIcon} from '@heroicons/react/24/outline'
 import {
 	ArrowLeftOnRectangleIcon,
 	ArrowRightOnRectangleIcon,
-	MagnifyingGlassIcon,
 	UserPlusIcon,
 } from '@heroicons/react/24/solid'
 import {
-	ActionIcon,
 	Anchor,
 	Avatar,
 	Button,
 	Divider,
-	Group,
 	Indicator,
 	Menu,
 	ScrollArea,
-	Text,
 } from '@mantine/core'
-import type {SpotlightAction} from '@mantine/spotlight'
-import {SpotlightProvider, useSpotlight} from '@mantine/spotlight'
 import type {LoaderArgs, SerializeFrom} from '@remix-run/node'
 import {json, redirect} from '@remix-run/node'
-import {
-	Form,
-	Link,
-	Outlet,
-	useLoaderData,
-	useLocation,
-	useNavigate,
-} from '@remix-run/react'
+import {Form, Link, Outlet, useLoaderData} from '@remix-run/react'
 import appConfig from 'app.config'
-import * as React from 'react'
 import {Footer} from '~/components/Footer'
 import {TailwindContainer} from '~/components/TailwindContainer'
 import {useCart} from '~/context/CartContext'
@@ -58,60 +44,22 @@ export const loader = async ({request}: LoaderArgs) => {
 }
 
 export default function AppLayout() {
-	const navigate = useNavigate()
-	const {products} = useLoaderData<typeof loader>()
-
-	const [actions] = React.useState<SpotlightAction[]>(() => {
-		const actions = [] as SpotlightAction[]
-
-		products.forEach(product => {
-			actions.push({
-				title: product.name,
-				category: product.category.join(', '),
-				icon: <Avatar src={product.image} radius="xl" size="sm" />,
-				onTrigger: () => navigate(`/product/${product.slug}`),
-			})
-		})
-
-		return actions
-	})
-
 	return (
 		<>
-			<SpotlightProvider
-				shortcut={['mod + K', '/']}
-				highlightQuery
-				searchPlaceholder="Search for products..."
-				searchIcon={<MagnifyingGlassIcon className="h-5 w-5" />}
-				limit={5}
-				actionsWrapperComponent={ActionsWrapper}
-				nothingFoundMessage={<Text>Nothing found</Text>}
-				filter={(query, actions) =>
-					actions.filter(
-						action =>
-							action.title.toLowerCase().includes(query.toLowerCase()) ||
-							action.category.toLowerCase().includes(query.toLowerCase())
-					)
-				}
-				actions={actions}
-			>
-				<div className="flex h-full flex-col">
-					<HeaderComponent />
-					<ScrollArea classNames={{root: 'flex-1'}}>
-						<main>
-							<Outlet />
-						</main>
-					</ScrollArea>
-					<Footer />
-				</div>
-			</SpotlightProvider>
+			<div className="flex h-full flex-col">
+				<HeaderComponent />
+				<ScrollArea classNames={{root: 'flex-1'}}>
+					<main>
+						<Outlet />
+					</main>
+				</ScrollArea>
+				<Footer />
+			</div>
 		</>
 	)
 }
 
 function HeaderComponent() {
-	const spotlight = useSpotlight()
-	const location = useLocation()
 	const {user} = useOptionalUser()
 	const {itemsInCart} = useCart()
 	const {isCustomer} = useLoaderData<typeof loader>()
@@ -133,14 +81,6 @@ function HeaderComponent() {
 						</div>
 
 						<div className="flex items-center gap-4">
-							<ActionIcon
-								title="Search"
-								size="md"
-								onClick={() => spotlight.openSpotlight()}
-							>
-								<MagnifyingGlassIcon className="h-5 w-5 text-gray-500" />
-							</ActionIcon>
-
 							<Indicator
 								label={itemsInCart.length}
 								inline
@@ -235,23 +175,5 @@ function HeaderComponent() {
 				</TailwindContainer>
 			</header>
 		</>
-	)
-}
-
-function ActionsWrapper({children}: {children: React.ReactNode}) {
-	return (
-		<div>
-			{children}
-			<Group
-				position="right"
-				px={15}
-				py="xs"
-				className="border-t border-gray-300"
-			>
-				<Text size="xs" color="dimmed">
-					Search powered by {appConfig.name}
-				</Text>
-			</Group>
-		</div>
 	)
 }
