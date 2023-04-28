@@ -87,6 +87,13 @@ export default function Item() {
 											</span>
 										</div>
 
+										<div className="mt-1 space-y-6">
+											<span>Barcode ID: </span>
+											<span className="text-base text-gray-500">
+												{product.barcodeId}
+											</span>
+										</div>
+
 										<NumberInput
 											mt={12}
 											required

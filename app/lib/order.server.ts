@@ -56,7 +56,7 @@ export function createOrder({
 		const order = await tx.order.create({
 			data: {
 				userId,
-				status: OrderStatus.READY,
+				status: OrderStatus.DONE,
 				customerName,
 				customerPhone,
 				payment: {
@@ -128,7 +128,7 @@ export async function cancelOrder(orderId: Order['id']) {
 			id: orderId,
 		},
 		data: {
-			status: OrderStatus.CANCELLED,
+			status: OrderStatus.RETURN,
 		},
 	})
 

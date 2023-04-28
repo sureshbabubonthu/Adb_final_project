@@ -13,7 +13,7 @@ model User {
   name     String
   password String
   email    String    @unique
-  role     Role      @default(CUSTOMER)
+  role     Role      @default(STAFF)
   orders   Order[]
   payments Payment[]
 
@@ -91,5 +91,5 @@ enum OrderStatus {
 
 enum Role {
   ADMIN
-  CUSTOMER
+  STAFF
 }

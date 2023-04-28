@@ -29,7 +29,7 @@ export async function createUser({
 	email,
 	password,
 	name,
-	role = Role.CUSTOMER,
+	role = Role.STAFF,
 }: {
 	email: User['email']
 	password: string

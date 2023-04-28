@@ -11,14 +11,14 @@ import {Form, Link, Outlet, useLocation} from '@remix-run/react'
 import appConfig from 'app.config'
 import {Footer} from '~/components/Footer'
 import {TailwindContainer} from '~/components/TailwindContainer'
-import {isCustomer, requireUser} from '~/lib/session.server'
+import {isStaff, requireUser} from '~/lib/session.server'
 import {useOptionalUser} from '~/utils/hooks'
 
 export type AppLoaderData = SerializeFrom<typeof loader>
 export const loader = async ({request}: LoaderArgs) => {
 	await requireUser(request)
 
-	if (await isCustomer(request)) {
+	if (await isStaff(request)) {
 		return redirect('/')
 	}
 

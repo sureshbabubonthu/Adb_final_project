@@ -21,7 +21,7 @@ import {Footer} from '~/components/Footer'
 import {TailwindContainer} from '~/components/TailwindContainer'
 import {useCart} from '~/context/CartContext'
 import {getAllProducts} from '~/lib/product.server'
-import {isAdmin, isCustomer} from '~/lib/session.server'
+import {isAdmin, isStaff} from '~/lib/session.server'
 import {useOptionalUser} from '~/utils/hooks'
 
 export type AppLoaderData = SerializeFrom<typeof loader>
@@ -39,7 +39,7 @@ export const loader = async ({request}: LoaderArgs) => {
 	return json({
 		products,
 		categories,
-		isCustomer: await isCustomer(request),
+		isCustomer: await isStaff(request),
 	})
 }
 
