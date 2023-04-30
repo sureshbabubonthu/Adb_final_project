@@ -246,11 +246,23 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 						</dd>
 					</div>
 
+					{/* Tax amount */}
+					<div className="flex justify-between pt-6  text-gray-900 sm:block sm:pt-0">
+						<dt className="font-semibold">Tax amount</dt>
+						<dd className="flex items-center gap-2 sm:mt-1">
+							<span className="font-semibold">
+								${order.payment?.tax.toFixed(2)}
+							</span>
+						</dd>
+					</div>
+
 					{/* Total amount */}
 					<div className="flex justify-between pt-6  text-gray-900 sm:block sm:pt-0">
 						<dt className="font-semibold">Total amount</dt>
 						<dd className="flex items-center gap-2 sm:mt-1">
-							<span className="font-semibold">${order.payment?.amount}</span>
+							<span className="font-semibold">
+								${order.payment?.amount.toFixed(2)}
+							</span>
 						</dd>
 					</div>
 				</dl>

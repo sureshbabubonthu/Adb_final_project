@@ -9,10 +9,11 @@ datasource db {
 }
 
 model User {
-  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
   name     String
   password String
-  email    String    @unique
+  email    String @unique
+
   role     Role      @default(STAFF)
   orders   Order[]
   payments Payment[]
@@ -55,6 +56,7 @@ model Payment {
   id            String        @id @default(auto()) @map("_id") @db.ObjectId
   createdAt     DateTime      @default(now())
   amount        Float
+  tax           Float
   paymentMethod PaymentMethod
   cardNumber    Int?
   address       String?

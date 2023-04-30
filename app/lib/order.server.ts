@@ -41,6 +41,7 @@ export function createOrder({
 	userId,
 	products,
 	amount,
+	tax,
 	customerName,
 	customerPhone,
 	paymentMethod,
@@ -48,6 +49,7 @@ export function createOrder({
 	userId: User['id']
 	products: Array<CartItem>
 	amount: Payment['amount']
+	tax: Payment['tax']
 	customerName: Order['customerName']
 	customerPhone: Order['customerPhone']
 	paymentMethod: PaymentMethod
@@ -63,6 +65,7 @@ export function createOrder({
 					create: {
 						paymentMethod,
 						amount,
+						tax,
 						user: {
 							connect: {
 								id: userId,

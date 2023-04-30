@@ -63,7 +63,6 @@ export default function Items() {
 					</div>
 				</TailwindContainer>
 			</div>
-			
 		</div>
 	)
 }

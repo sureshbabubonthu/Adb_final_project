@@ -10,6 +10,7 @@ import {
 	Button,
 	Input,
 	Modal,
+	NumberInput,
 	Select,
 	TextInput,
 } from '@mantine/core'
@@ -27,7 +28,7 @@ import {useCart} from '~/context/CartContext'
 import {createOrder} from '~/lib/order.server'
 import {getUserId} from '~/lib/session.server'
 import {useAppData} from '~/utils/hooks'
-import {titleCase} from '~/utils/misc'
+import {formatDateTime, titleCase} from '~/utils/misc'
 import {badRequest} from '~/utils/misc.server'
 
 type ActionData = Partial<{
@@ -49,6 +50,7 @@ export async function action({request}: ActionArgs) {
 		case 'place-order': {
 			const stringifiedProducts = formData.get('products[]')?.toString()
 			const amount = formData.get('amount')?.toString()
+			const tax = formData.get('tax')?.toString()
 			const paymentMethod = formData.get('paymentMethod')?.toString()
 			const customerName = formData.get('customerName')?.toString()
 			const customerPhone = formData.get('customerPhone')?.toString()
@@ -58,7 +60,8 @@ export async function action({request}: ActionArgs) {
 				!amount ||
 				!paymentMethod ||
 				!customerName ||
-				!customerPhone
+				!customerPhone ||
+				!tax
 			) {
 				return badRequest<ActionData>({
 					success: false,
@@ -71,6 +74,7 @@ export async function action({request}: ActionArgs) {
 			await createOrder({
 				userId,
 				products,
+				tax: Number(tax),
 				customerName,
 				customerPhone,
 				amount: Number(amount),
@@ -94,7 +98,7 @@ export default function Dashboard() {
 	const [query, setQuery] = React.useState('')
 	const [error, setError] = React.useState('')
 
-	const {clearCart, itemsInCart, totalPrice} = useCart()
+	const {clearCart, itemsInCart, totalPrice, tax} = useCart()
 
 	const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>(
 		PaymentMethod.CREDIT_CARD
@@ -139,19 +143,24 @@ export default function Dashboard() {
 
 	return (
 		<div className="flex h-[80vh] flex-col gap-4 overflow-hidden p-4">
-			<div className="flex items-center gap-4 border-b border-b-gray-500 pb-4">
-				<Button
-					variant="filled"
-					color="white"
-					onClick={() => handleOpenSearchModal.open()}
-				>
-					<MagnifyingGlassIcon className="mr-2 h-4 w-4" aria-hidden="true" />
-					<p>Search via barcode</p>
-				</Button>
+			<div className="flex w-full items-center justify-between border-b border-b-gray-500 pb-4">
+				<div className="flex items-center gap-4">
+					<Button
+						variant="filled"
+						color="white"
+						onClick={() => handleOpenSearchModal.open()}
+					>
+						<MagnifyingGlassIcon className="mr-2 h-4 w-4" aria-hidden="true" />
+						<p>Search via barcode</p>
+					</Button>
+					<Button variant="outline" component={Link} to="/items">
+						View all items
+					</Button>
+				</div>
 
-				<Button variant="outline" component={Link} to="/items">
-					View all items
-				</Button>
+				<div>
+					<p className="text-sm">{formatDateTime(new Date())}</p>
+				</div>
 			</div>
 
 			<div className="flex-1 overflow-y-auto p-4">
@@ -181,7 +190,10 @@ export default function Dashboard() {
 							</Button>
 						</div>
 
-						<p>Total: ${totalPrice.toFixed(2)}</p>
+						<div className="flex flex-col gap-2">
+							<p>Tax: ${tax.toFixed(2)}</p>
+							<p>Total: ${totalPrice.toFixed(2)}</p>
+						</div>
 					</div>
 				) : null}
 			</div>
@@ -279,6 +291,7 @@ export default function Dashboard() {
 
 						formData.append('products[]', JSON.stringify(itemsInCart))
 						formData.append('amount', totalPrice.toString())
+						formData.append('tax', tax.toString())
 						formData.append('intent', 'place-order')
 						formData.append('paymentMethod', paymentMethod)
 
@@ -390,7 +403,7 @@ export default function Dashboard() {
 }
 
 function CartItems() {
-	const {itemsInCart, removeItemFromCart} = useCart()
+	const {itemsInCart} = useCart()
 
 	return (
 		<>
@@ -418,46 +431,9 @@ function CartItems() {
 				</thead>
 
 				<tbody className="divide-y divide-gray-200 border-b border-gray-200 text-sm sm:border-t">
-					{itemsInCart.map(item => {
-						const itemTotalPrice = item.basePrice * item.quantity
-
-						return (
-							<tr key={item.id}>
-								<td className="py-3 pr-8">
-									<div className="flex items-center">
-										<img
-											src={item.image}
-											alt={item.name}
-											className="mr-6 h-10 w-10 rounded object-cover object-center"
-										/>
-										<div>
-											<div className="flex flex-col font-medium text-gray-900">
-												<Anchor
-													component={Link}
-													to={`/product/${item.slug}`}
-													size="sm"
-												>
-													{item.name}
-												</Anchor>
-											</div>
-										</div>
-									</div>
-								</td>
-
-								<td className="hidden py-6 pr-8 sm:table-cell">
-									{item.quantity}
-								</td>
-								<td className="hidden py-6 pr-8 font-semibold sm:table-cell">
-									${itemTotalPrice.toFixed(2)}
-								</td>
-								<td className="whitespace-nowrap py-6 text-right font-medium">
-									<ActionIcon onClick={() => removeItemFromCart(item.id!)}>
-										<TrashIcon className="h-4 w-4 text-red-500" />
-									</ActionIcon>
-								</td>
-							</tr>
-						)
-					})}
+					{itemsInCart.map(item => (
+						<ItemRow item={item} key={item.id} />
+					))}
 				</tbody>
 			</table>
 		</>
@@ -472,5 +448,54 @@ function EmptyState() {
 				Add items to your customers card and they will appear here
 			</span>
 		</div>
+	)
+}
+
+function ItemRow({item}: {item: CartItem}) {
+	const {removeItemFromCart, updateQuantity} = useCart()
+
+	const itemTotalPrice = item.basePrice * item.quantity
+
+	const [quantity, setQuantity] = React.useState<number | undefined>(
+		item.quantity
+	)
+
+	React.useEffect(() => {
+		if (quantity !== undefined) {
+			updateQuantity(item.id, quantity)
+		}
+	}, [item.id, quantity, updateQuantity])
+
+	return (
+		<tr key={item.id}>
+			<td className="py-3 pr-8">
+				<div className="flex items-center">
+					<img
+						src={item.image}
+						alt={item.name}
+						className="mr-6 h-10 w-10 rounded object-cover object-center"
+					/>
+					<div>
+						<div className="flex flex-col font-medium text-gray-900">
+							<Anchor component={Link} to={`/product/${item.slug}`} size="sm">
+								{item.name}
+							</Anchor>
+						</div>
+					</div>
+				</div>
+			</td>
+
+			<td className="hidden py-6 pr-8 sm:table-cell">
+				<NumberInput value={quantity} onChange={setQuantity} min={1} w={80} />
+			</td>
+			<td className="hidden py-6 pr-8 font-semibold sm:table-cell">
+				${itemTotalPrice.toFixed(2)}
+			</td>
+			<td className="whitespace-nowrap py-6 text-right font-medium">
+				<ActionIcon onClick={() => removeItemFromCart(item.id!)}>
+					<TrashIcon className="h-4 w-4 text-red-500" />
+				</ActionIcon>
+			</td>
+		</tr>
 	)
 }

@@ -25,3 +25,13 @@ export function formatTime(date: Date | string) {
 		minute: 'numeric',
 	}).format(new Date(date))
 }
+
+export function formatDateTime(date: Date | string) {
+	return new Intl.DateTimeFormat('en', {
+		weekday: 'short',
+		month: 'short',
+		day: 'numeric',
+		hour: 'numeric',
+		minute: 'numeric',
+	}).format(new Date(date))
+}

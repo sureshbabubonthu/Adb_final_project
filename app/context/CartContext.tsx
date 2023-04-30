@@ -17,6 +17,8 @@ interface ICartContext {
 	removeItemFromCart: (itemId: CartItem['id']) => void
 	clearCart: () => void
 	totalPrice: number
+	tax: number
+	updateQuantity: (itemId: CartItem['id'], quantity: number) => void
 }
 
 const CartContext = React.createContext<ICartContext | undefined>(undefined)
@@ -27,10 +29,12 @@ export function CartProvider({children}: {children: React.ReactNode}) {
 		defaultValue: [],
 	})
 
-	const totalPrice = items.reduce(
+	const priceBeforeTax = items.reduce(
 		(acc, item) => acc + item.basePrice * item.quantity,
 		0
 	)
+	const tax = priceBeforeTax * 0.03
+	const totalPrice = priceBeforeTax + tax
 
 	const clearCart = React.useCallback(() => {
 		cleanNotifications()
@@ -98,6 +102,22 @@ export function CartProvider({children}: {children: React.ReactNode}) {
 		})
 	}
 
+	const updateQuantity = React.useCallback(
+		(itemId: CartItem['id'], quantity: number) => {
+			setItems(prev => {
+				const newItems = [...prev]
+
+				const index = newItems.findIndex(i => i.id === itemId)
+				if (index > -1) {
+					newItems[index].quantity = quantity
+				}
+
+				return newItems
+			})
+		},
+		[setItems]
+	)
+
 	return (
 		<CartContext.Provider
 			value={{
@@ -106,6 +126,8 @@ export function CartProvider({children}: {children: React.ReactNode}) {
 				addItemToCart,
 				removeItemFromCart,
 				clearCart,
+				tax,
+				updateQuantity,
 			}}
 		>
 			{children}
