@@ -1,25 +1,16 @@
-import {ShoppingBagIcon, ShoppingCartIcon} from '@heroicons/react/24/outline'
+import {ShoppingBagIcon} from '@heroicons/react/24/outline'
 import {
 	ArrowLeftOnRectangleIcon,
 	ArrowRightOnRectangleIcon,
 	UserPlusIcon,
 } from '@heroicons/react/24/solid'
-import {
-	Anchor,
-	Avatar,
-	Button,
-	Divider,
-	Indicator,
-	Menu,
-	ScrollArea,
-} from '@mantine/core'
+import {Anchor, Avatar, Divider, Menu, ScrollArea} from '@mantine/core'
 import type {LoaderArgs, SerializeFrom} from '@remix-run/node'
 import {json, redirect} from '@remix-run/node'
 import {Form, Link, Outlet, useLoaderData, useLocation} from '@remix-run/react'
 import appConfig from 'app.config'
 import {Footer} from '~/components/Footer'
 import {TailwindContainer} from '~/components/TailwindContainer'
-import {useCart} from '~/context/CartContext'
 import {getAllProducts} from '~/lib/product.server'
 import {isAdmin, isStaff} from '~/lib/session.server'
 import {useOptionalUser} from '~/utils/hooks'
@@ -62,7 +53,6 @@ export default function AppLayout() {
 function HeaderComponent() {
 	const location = useLocation()
 	const {user} = useOptionalUser()
-	const {itemsInCart} = useCart()
 	const {isCustomer} = useLoaderData<typeof loader>()
 
 	return (
@@ -82,26 +72,6 @@ function HeaderComponent() {
 						</div>
 
 						<div className="flex items-center gap-4">
-							<Indicator
-								label={itemsInCart.length}
-								inline
-								size={16}
-								disabled={itemsInCart.length <= 0}
-								color="red"
-								offset={7}
-							>
-								<Button
-									px={8}
-									component={Link}
-									variant="subtle"
-									to="/cart"
-									title="Cart"
-									color="gray"
-								>
-									<ShoppingCartIcon className="h-5 w-5 text-gray-500" />
-								</Button>
-							</Indicator>
-
 							<Menu
 								position="bottom-start"
 								withArrow
