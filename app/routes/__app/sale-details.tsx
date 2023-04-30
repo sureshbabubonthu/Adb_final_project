@@ -9,6 +9,7 @@ import {
 	useLoaderData,
 	useSearchParams,
 } from '@remix-run/react'
+import appConfig from 'app.config'
 import clsx from 'clsx'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -56,13 +57,6 @@ export const action = async ({request}: ActionArgs) => {
 			const productId = formData.get('productId')?.toString()
 			const productQuantity = formData.get('productQuantity')?.toString()
 			const productPrice = formData.get('productPrice')?.toString()
-
-			console.log({
-				orderId,
-				productId,
-				productQuantity,
-				productPrice,
-			})
 
 			if (!orderId) {
 				return badRequest({success: false, message: 'Invalid order id'})
@@ -115,13 +109,19 @@ export const action = async ({request}: ActionArgs) => {
 				},
 			})
 
+			const totalCanceledAmount = Number(productPrice) * Number(productQuantity)
+			const canceledTax = totalCanceledAmount * appConfig.TAX_PERCENTAGE
+
 			await db.payment.update({
 				where: {
 					orderId,
 				},
 				data: {
 					amount: {
-						decrement: Number(productPrice) * Number(productQuantity),
+						decrement: totalCanceledAmount,
+					},
+					tax: {
+						decrement: canceledTax,
 					},
 				},
 			})
