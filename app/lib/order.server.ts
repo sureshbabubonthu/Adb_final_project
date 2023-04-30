@@ -1,5 +1,6 @@
 import type {Order, Payment, PaymentMethod, User} from '@prisma/client'
 import {OrderStatus} from '@prisma/client'
+import appConfig from 'app.config'
 import type {CartItem} from '~/context/CartContext'
 import {db} from './prisma.server'
 
@@ -185,12 +186,15 @@ export async function cancelOrder(orderId: Order['id']) {
 		})
 	)
 
+	const newTax = newAmountAfterReturns * appConfig.TAX_PERCENTAGE
+
 	await db.payment.update({
 		where: {
 			orderId,
 		},
 		data: {
 			amount: newAmountAfterReturns,
+			tax: newTax,
 		},
 	})
 }

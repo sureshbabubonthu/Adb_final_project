@@ -1,6 +1,7 @@
 import {CheckCircleIcon, MinusCircleIcon} from '@heroicons/react/24/solid'
 import {cleanNotifications, showNotification} from '@mantine/notifications'
 import type {Product} from '@prisma/client'
+import appConfig from 'app.config'
 import * as React from 'react'
 import {useLocalStorageState} from '~/utils/hooks'
 import type {DateToString} from '~/utils/types'
@@ -33,7 +34,7 @@ export function CartProvider({children}: {children: React.ReactNode}) {
 		(acc, item) => acc + item.basePrice * item.quantity,
 		0
 	)
-	const tax = priceBeforeTax * 0.03
+	const tax = priceBeforeTax * appConfig.TAX_PERCENTAGE
 	const totalPrice = priceBeforeTax + tax
 
 	const clearCart = React.useCallback(() => {
