@@ -17,17 +17,70 @@ import {DatePicker} from '@mantine/dates'
 import {useDisclosure} from '@mantine/hooks'
 import {cleanNotifications, showNotification} from '@mantine/notifications'
 import {PaymentMethod} from '@prisma/client'
+import type {ActionArgs} from '@remix-run/node'
+import {json, redirect} from '@remix-run/node'
 import {Link, useFetcher, useNavigate} from '@remix-run/react'
 import * as React from 'react'
 import ReactInputMask from 'react-input-mask'
+import type {CartItem} from '~/context/CartContext'
 import {useCart} from '~/context/CartContext'
+import {createOrder} from '~/lib/order.server'
+import {getUserId} from '~/lib/session.server'
 import {useAppData} from '~/utils/hooks'
 import {titleCase} from '~/utils/misc'
+import {badRequest} from '~/utils/misc.server'
 
 type ActionData = Partial<{
 	success: boolean
 	message: string
 }>
+
+export async function action({request}: ActionArgs) {
+	const formData = await request.formData()
+
+	const userId = await getUserId(request)
+	const intent = formData.get('intent')?.toString()
+
+	if (!userId || !intent) {
+		return json({success: false, message: 'Unauthorized'}, {status: 401})
+	}
+
+	switch (intent) {
+		case 'place-order': {
+			const stringifiedProducts = formData.get('products[]')?.toString()
+			const amount = formData.get('amount')?.toString()
+			const paymentMethod = formData.get('paymentMethod')?.toString()
+			const customerName = formData.get('customerName')?.toString()
+			const customerPhone = formData.get('customerPhone')?.toString()
+
+			if (
+				!stringifiedProducts ||
+				!amount ||
+				!paymentMethod ||
+				!customerName ||
+				!customerPhone
+			) {
+				return badRequest<ActionData>({
+					success: false,
+					message: 'Invalid request body',
+				})
+			}
+
+			const products = JSON.parse(stringifiedProducts) as Array<CartItem>
+
+			await createOrder({
+				userId,
+				products,
+				customerName,
+				customerPhone,
+				amount: Number(amount),
+				paymentMethod: paymentMethod as PaymentMethod,
+			})
+
+			return redirect('/sale-details/?success=true')
+		}
+	}
+}
 
 export default function Dashboard() {
 	const {products} = useAppData()
