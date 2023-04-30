@@ -10,6 +10,8 @@ import {
 	useSearchParams,
 } from '@remix-run/react'
 import clsx from 'clsx'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 import * as React from 'react'
 import {TailwindContainer} from '~/components/TailwindContainer'
 import {useCart} from '~/context/CartContext'
@@ -200,24 +202,20 @@ export default function OrderHistory() {
 
 function Order({order}: {order: LoaderData['orders'][number]}) {
 	const returnOrderFetcher = useFetcher()
+	const pdfRef = React.useRef<HTMLTableElement>(null)
 
 	const areAllProdcutsNonReturnable = order.products.every(
 		product => !product.product.isReturnable
 	)
 
 	return (
-		<div key={order.id}>
-			<h3 className="sr-only">
-				Order placed on{' '}
-				<time dateTime={order.createdAt}>{order.createdAt}</time>
-			</h3>
-
+		<div key={order.id} ref={pdfRef}>
 			<div
 				className={clsx(
 					'rounded-lg bg-gray-50 py-6 px-4 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-6 lg:gap-8'
 				)}
 			>
-				<dl className="flex-auto space-y-6 divide-y divide-gray-200 text-sm text-gray-600  sm:flex sm:items-center sm:gap-6 sm:space-y-0 sm:divide-y-0 lg:flex-none lg:gap-16">
+				<dl className="flex-auto space-y-6 divide-y divide-gray-200 text-sm text-gray-600  sm:flex sm:items-center sm:gap-6 sm:space-y-0 sm:divide-y-0 lg:flex-none lg:gap-12">
 					{/* Date placed */}
 					<div className="flex justify-between sm:block">
 						<dt className="font-semibold text-gray-900">Date placed</dt>
@@ -267,29 +265,52 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 					</div>
 				</dl>
 
-				{order.status === OrderStatus.DONE ? (
+				<div className="flex items-center gap-4">
 					<Button
-						color="red"
 						variant="outline"
-						loaderPosition="right"
-						loading={returnOrderFetcher.state !== 'idle'}
-						disabled={areAllProdcutsNonReturnable}
-						onClick={() =>
-							returnOrderFetcher.submit(
-								{
-									intent: 'cancel-order',
-									orderId: order.id,
-								},
-								{
-									method: 'post',
-									replace: true,
-								}
-							)
-						}
+						onClick={() => {
+							const input = pdfRef.current!
+
+							html2canvas(input).then(canvas => {
+								const imgData = canvas.toDataURL('image/png')
+								const pdf = new jsPDF({
+									orientation: 'landscape',
+								})
+								const imgProps = pdf.getImageProperties(imgData)
+								const pdfWidth = pdf.internal.pageSize.getWidth()
+								const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
+								pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+								pdf.save('invoice.pdf')
+							})
+						}}
 					>
-						{areAllProdcutsNonReturnable ? 'Non-returnable' : 'Return Order'}
+						Invoice
 					</Button>
-				) : null}
+
+					{order.status === OrderStatus.DONE ? (
+						<Button
+							color="red"
+							variant="outline"
+							loaderPosition="right"
+							loading={returnOrderFetcher.state !== 'idle'}
+							disabled={areAllProdcutsNonReturnable}
+							onClick={() =>
+								returnOrderFetcher.submit(
+									{
+										intent: 'cancel-order',
+										orderId: order.id,
+									},
+									{
+										method: 'post',
+										replace: true,
+									}
+								)
+							}
+						>
+							{areAllProdcutsNonReturnable ? 'Non-returnable' : 'Return'}
+						</Button>
+					) : null}
+				</div>
 			</div>
 
 			<table className="mt-4 w-full text-gray-500 sm:mt-6">

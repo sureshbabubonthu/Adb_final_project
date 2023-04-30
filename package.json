@@ -25,6 +25,8 @@
 		"@mantine/hooks": "^5.9.0",
 		"@mantine/modals": "^5.9.0",
 		"@mantine/notifications": "^5.9.0",
+		"html2canvas": "^1.4.1",
+		"jspdf": "^2.5.1",
 		"@mantine/remix": "^5.9.0",
 		"@mantine/spotlight": "^5.9.0",
 		"@mantine/ssr": "^5.9.0",
