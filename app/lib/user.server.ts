@@ -55,6 +55,10 @@ export async function verifyLogin(email: User['email'], password: string) {
 		return null
 	}
 
+	if (userWithPassword.disabled) {
+		return null
+	}
+
 	const isValid = await bcrypt.compare(password, userWithPassword.password)
 
 	if (!isValid) {

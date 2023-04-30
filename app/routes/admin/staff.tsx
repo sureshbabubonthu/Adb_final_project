@@ -1,5 +1,5 @@
 import {ArrowLeftIcon, PlusIcon} from '@heroicons/react/24/solid'
-import {Button, Modal, PasswordInput, TextInput} from '@mantine/core'
+import {Badge, Button, Modal, PasswordInput, TextInput} from '@mantine/core'
 import {useDisclosure} from '@mantine/hooks'
 import {Role} from '@prisma/client'
 import type {ActionFunction} from '@remix-run/node'
@@ -87,7 +87,7 @@ export default function ManageOrganizers() {
 							>
 								Back
 							</Button>
-							<h1 className="text-3xl font-semibold text-gray-900">Users</h1>
+							<h1 className="text-3xl font-semibold text-gray-900">Staff</h1>
 						</div>
 						<div>
 							<Button
@@ -120,6 +120,13 @@ export default function ManageOrganizers() {
 											>
 												Email
 											</th>
+
+											<th
+												scope="col"
+												className="hidden py-3.5 px-3 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+											>
+												Active
+											</th>
 											<th
 												scope="col"
 												className="relative py-3.5 pl-3 pr-4 sm:pr-6 md:pr-0"
@@ -135,7 +142,59 @@ export default function ManageOrganizers() {
 												<td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 md:pl-0">
 													{user.email}
 												</td>
-												<td className="relative space-x-4 whitespace-nowrap py-4 pl-3 pr-4 text-left text-sm font-medium sm:pr-6 md:pr-0"></td>
+												<td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 md:pl-0">
+													<Badge
+														color={user.disabled ? 'red' : 'blue'}
+														size="sm"
+													>
+														{!user.disabled ? 'Active' : 'Inactive'}
+													</Badge>
+												</td>
+												<td className="relative space-x-4 whitespace-nowrap py-4 pl-3 pr-4 text-left text-sm font-medium sm:pr-6 md:pr-0">
+													<div className="flex items-center gap-4">
+														<Button
+															variant="outline"
+															compact
+															size="sm"
+															disabled={!user.disabled}
+															onClick={() => {
+																fetcher.submit(
+																	{
+																		userId: user.id,
+																	},
+																	{
+																		method: 'post',
+																		replace: true,
+																		action: '/api/user/enable',
+																	}
+																)
+															}}
+														>
+															Enable
+														</Button>
+
+														<Button
+															variant="outline"
+															compact
+															size="sm"
+															disabled={user.disabled}
+															onClick={() => {
+																fetcher.submit(
+																	{
+																		userId: user.id,
+																	},
+																	{
+																		method: 'post',
+																		replace: true,
+																		action: '/api/user/disable',
+																	}
+																)
+															}}
+														>
+															Disable
+														</Button>
+													</div>
+												</td>
 											</tr>
 										))}
 									</tbody>
@@ -149,7 +208,7 @@ export default function ManageOrganizers() {
 			<Modal
 				opened={isModalOpen}
 				onClose={() => handleModal.close()}
-				title="Add Nutritionist"
+				title="Add Staff"
 				centered
 				overlayBlur={1.2}
 				overlayOpacity={0.6}
