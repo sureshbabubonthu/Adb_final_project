@@ -249,7 +249,7 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 						<dt className="font-semibold">Tax amount</dt>
 						<dd className="flex items-center gap-2 sm:mt-1">
 							<span className="font-semibold">
-								${order.payment?.tax.toFixed(2)}
+								${Math.floor(order.payment?.tax!)}
 							</span>
 						</dd>
 					</div>
@@ -259,7 +259,7 @@ function Order({order}: {order: LoaderData['orders'][number]}) {
 						<dt className="font-semibold">Total amount</dt>
 						<dd className="flex items-center gap-2 sm:mt-1">
 							<span className="font-semibold">
-								${order.payment?.amount.toFixed(2)}
+								${Math.floor(order.payment?.amount!)}
 							</span>
 						</dd>
 					</div>

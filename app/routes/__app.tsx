@@ -12,11 +12,13 @@ import appConfig from 'app.config'
 import {Footer} from '~/components/Footer'
 import {TailwindContainer} from '~/components/TailwindContainer'
 import {getAllProducts} from '~/lib/product.server'
-import {isAdmin, isStaff} from '~/lib/session.server'
+import {isAdmin, isStaff, requireUserId} from '~/lib/session.server'
 import {useOptionalUser} from '~/utils/hooks'
 
 export type AppLoaderData = SerializeFrom<typeof loader>
 export const loader = async ({request}: LoaderArgs) => {
+	await requireUserId(request)
+
 	if (await isAdmin(request)) {
 		return redirect('/admin')
 	}
